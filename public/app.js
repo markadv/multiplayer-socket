@@ -178,8 +178,17 @@ socket.on("playerWin", function () {
 socket.on("leaderboardUpdate", function (leaderboard) {
     if (Object.keys(leaderboard).length > 0) {
         $(".leaderboard-list").html("");
-        for (let key in leaderboard) {
-            $(".leaderboard-list").append(`<li>${key + " : " + leaderboard[key]}</li>`);
+        let sortList = [];
+        for (let leader in leaderboard) {
+            sortList.push([leader, leaderboard[leader]]);
+        }
+
+        sortList.sort(function (a, b) {
+            return b[1] - a[1];
+        });
+
+        for (let i = 0; i < sortList.length; i++) {
+            $(".leaderboard-list").append(`<li>${sortList[i][0] + " : " + sortList[i][1]}</li>`);
         }
     }
 });

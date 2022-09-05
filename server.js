@@ -1,7 +1,8 @@
 const helper = require("./helper.js");
 const express = require("express");
 const app = express();
-const server = app.listen(1337);
+const port = 1337;
+const server = app.listen(process.env.PORT || port);
 app.use(express.static(__dirname + "/public"));
 const io = require("socket.io")(server);
 let users = {},
@@ -25,8 +26,8 @@ io.on("connection", function (socket) {
     socket.on("disconnect", function () {
         //remove player from client and database
         delete users[socket.id];
-        io.emit("removePlayer", socket.id);
-        io.emit("playerUpdate", users);
+        socket.broadcast.emit("removePlayer", socket.id);
+        socket.broadcast.emit("playerUpdate", users);
     });
     /* Player actions */
     socket.on("playerMove", function (data) {
