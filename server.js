@@ -29,7 +29,7 @@ io.on("connection", function (socket) {
         socket.broadcast.emit("removePlayer", socket.id);
         socket.broadcast.emit("playerUpdate", users);
     });
-    /* Player actions */
+    /* Player actions (Must be fully optimized) */
     socket.on("playerMove", function (data) {
         users[data.id] = data;
         io.emit("playerUpdate", users);
@@ -39,31 +39,30 @@ io.on("connection", function (socket) {
         io.emit("playerUpdate", users);
     });
     socket.on("coinsAdd", function (data) {
+        users[data.id]["coins"]++;
         if (users[data.id]["coins"] >= 15) {
-            leaderboard[users[data.id].name]
-                ? leaderboard[users[data.id].name]++
-                : (leaderboard[users[data.id].name] = 1);
+            users[data.id]["coins"] = 0;
             for (let key in users) {
                 users[key].coins = 0;
             }
-            io.emit("playerWin");
-            io.emit("leaderboardUpdate", leaderboard);
-        } else {
-            users[data.id]["coins"]++;
+            leaderboard[users[data.id].name]
+                ? leaderboard[users[data.id].name]++
+                : (leaderboard[users[data.id].name] = 1);
+
+            io.emit("playerWin", leaderboard);
         }
-    });
-    /* Coins */
-    socket.on("coinsGrab", function (data) {
-        delete coins[data];
+
+        delete coins[data.key];
         coinSpawner();
         io.emit("coinsUpdate", coins);
     });
 });
 function coinSpawner() {
-    while (Object.keys(coins).length < 6) {
+    while (Object.keys(coins).length < 4) {
         let newCoin = helper.getRandomSafeSpot(),
             cid = helper.getKeyString(newCoin.x, newCoin.y);
         coins[cid] = newCoin;
     }
 }
 coinSpawner();
+function playerCoinsToZero() {}

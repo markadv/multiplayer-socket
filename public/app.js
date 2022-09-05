@@ -10,6 +10,7 @@ let playerElements = {};
 let coins = {};
 let coinElements = {};
 let audioBgm;
+let moveAllowed = true;
 
 const gameContainer = document.querySelector(".game-container");
 const playerNameInput = document.querySelector("#player-name");
@@ -23,13 +24,19 @@ async function attemptGrabCoin(x, y) {
         players[playerId].coins++;
         var audioCoin = new Audio("/sfx/collect-coin.mp3");
         audioCoin.play();
-        socket.emit("coinsGrab", key);
-        socket.emit("coinsAdd", { id: playerId });
-        // socket.emit("profileUpdate", { id: playerId, profile: "coins", value: 1 });
+        socket.emit("coinsAdd", { key: key, id: playerId });
+        if (players[playerId].coins >= 15) {
+            players[playerId].coins = 0;
+        }
     }
 }
 
-async function handleArrowPress(xChange = 0, yChange = 0) {
+async function handleControls(xChange = 0, yChange = 0) {
+    if (!moveAllowed) {
+        return;
+    }
+    moveAllowed = false;
+    setTimeout(() => (moveAllowed = true), 120);
     playMusic();
     /* Controls */
     const newX = players[playerId].x + xChange;
@@ -73,18 +80,18 @@ function playMusic() {
 }
 
 function initGame() {
-    new Controller("ArrowUp", () => handleArrowPress(0, -1));
-    new Controller("KeyW", () => handleArrowPress(0, -1));
-    new Controller("ArrowDown", () => handleArrowPress(0, 1));
-    new Controller("KeyS", () => handleArrowPress(0, 1));
-    new Controller("ArrowLeft", () => handleArrowPress(-1, 0));
-    new Controller("KeyA", () => handleArrowPress(-1, 0));
-    new Controller("ArrowRight", () => handleArrowPress(1, 0));
-    new Controller("KeyD", () => handleArrowPress(1, 0));
+    new Controller("ArrowUp", () => handleControls(0, -1));
+    new Controller("KeyW", () => handleControls(0, -1));
+    new Controller("ArrowDown", () => handleControls(0, 1));
+    new Controller("KeyS", () => handleControls(0, 1));
+    new Controller("ArrowLeft", () => handleControls(-1, 0));
+    new Controller("KeyA", () => handleControls(-1, 0));
+    new Controller("ArrowRight", () => handleControls(1, 0));
+    new Controller("KeyD", () => handleControls(1, 0));
 
     playerNameInput.addEventListener("change", (e) => {
         const newName = e.target.value || helper.createName();
-        playerNameInput.value = newName;
+        playerNameInput.value = newName.toUpperCase();
         socket.emit("profileUpdate", { id: playerId, profile: "name", value: newName });
     });
 
@@ -132,6 +139,7 @@ function initGame() {
     /* End of player sockets */
     socket.on("coinsUpdate", function (data) {
         coins = data;
+        /* Remove excess coins */
         for (let key in coinElements) {
             if (data[key] === undefined) {
                 gameContainer.removeChild(coinElements[key]);
@@ -165,7 +173,7 @@ function initGame() {
     });
 }
 
-socket.on("playerWin", function () {
+socket.on("playerWin", function (leaderboard) {
     for (let key in players) {
         players[key].coins = 0;
         socket.emit("profileUpdate", { id: players[key].id, profile: "coins", value: 0 });
@@ -173,9 +181,7 @@ socket.on("playerWin", function () {
 
     var audioCoin = new Audio("/sfx/win.mp3");
     audioCoin.play();
-});
-
-socket.on("leaderboardUpdate", function (leaderboard) {
+    /* Leaderboard */
     if (Object.keys(leaderboard).length > 0) {
         $(".leaderboard-list").html("");
         let sortList = [];
