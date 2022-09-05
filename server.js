@@ -1,4 +1,3 @@
-const helper = require("./helper.js");
 const express = require("express");
 const app = express();
 const port = 1337;
@@ -16,12 +15,11 @@ io.on("connection", function (socket) {
     });
     /* Initialize spawn and disconnect */
     socket.on("userSpawn", function (data) {
+        users[socket.id] = data;
         socket.emit("playerInitial", users);
         socket.emit("coinsUpdate", coins);
         socket.emit("leaderboardUpdate", leaderboard);
-        users[socket.id] = data;
-        io.emit("playerAdd", users[socket.id]);
-        io.emit("playerUpdate", users);
+        socket.broadcast.emit("playerSpawn", users[socket.id]);
     });
     socket.on("disconnect", function () {
         //remove player from client and database
@@ -51,7 +49,6 @@ io.on("connection", function (socket) {
 
             io.emit("playerWin", leaderboard);
         }
-
         delete coins[data.key];
         coinSpawner();
         io.emit("coinsUpdate", coins);
@@ -59,9 +56,43 @@ io.on("connection", function (socket) {
 });
 function coinSpawner() {
     while (Object.keys(coins).length < 4) {
-        let newCoin = helper.getRandomSafeSpot(),
-            cid = helper.getKeyString(newCoin.x, newCoin.y);
+        let newCoin = getRandomSafeSpot(),
+            cid = getKeyString(newCoin.x, newCoin.y);
         coins[cid] = newCoin;
     }
 }
 coinSpawner();
+function getKeyString(x, y) {
+    return `${x}x${y}`;
+}
+function getRandomSafeSpot() {
+    //We don't look things up by key here, so just return an x/y
+    return randomFromArray([
+        { x: 1, y: 4 },
+        { x: 2, y: 4 },
+        { x: 1, y: 5 },
+        { x: 2, y: 6 },
+        { x: 2, y: 8 },
+        { x: 2, y: 9 },
+        { x: 4, y: 8 },
+        { x: 5, y: 5 },
+        { x: 5, y: 8 },
+        { x: 5, y: 10 },
+        { x: 5, y: 11 },
+        { x: 11, y: 7 },
+        { x: 12, y: 7 },
+        { x: 13, y: 7 },
+        { x: 13, y: 6 },
+        { x: 13, y: 8 },
+        { x: 7, y: 6 },
+        { x: 7, y: 7 },
+        { x: 7, y: 8 },
+        { x: 8, y: 8 },
+        { x: 10, y: 8 },
+        { x: 8, y: 8 },
+        { x: 11, y: 4 },
+    ]);
+}
+function randomFromArray(array) {
+    return array[Math.floor(Math.random() * array.length)];
+}

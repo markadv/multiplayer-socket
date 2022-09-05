@@ -1,12 +1,12 @@
 var socket = io();
 socket.emit("initServer");
+let world = new World();
 
 // Options for Player Colors... these are in the same order as our sprite sheet
 const playerColors = ["blue", "red", "orange", "yellow", "green", "purple"];
-
 let playerId;
-let players = {};
-let playerElements = {};
+// let players = {};
+// let playerElements = {};
 let coins = {};
 let coinElements = {};
 let audioBgm;
@@ -21,13 +21,11 @@ async function attemptGrabCoin(x, y) {
     const key = helper.getKeyString(x, y);
     if (coins[key]) {
         // Remove this key from data, then uptick player's coin count
-        players[playerId].coins++;
+        const playerList = world.getAll();
+        playerList[playerId].coins++;
         var audioCoin = new Audio("/sfx/collect-coin.mp3");
         audioCoin.play();
         socket.emit("coinsAdd", { key: key, id: playerId });
-        if (players[playerId].coins >= 15) {
-            players[playerId].coins = 0;
-        }
     }
 }
 
@@ -36,23 +34,24 @@ async function handleControls(xChange = 0, yChange = 0) {
         return;
     }
     moveAllowed = false;
-    setTimeout(() => (moveAllowed = true), 120);
+    setTimeout(() => (moveAllowed = true), 100);
     playMusic();
     /* Controls */
-    const newX = players[playerId].x + xChange;
-    const newY = players[playerId].y + yChange;
+    const playerList = world.getAll();
+    const newX = playerList[playerId].x + xChange;
+    const newY = playerList[playerId].y + yChange;
     if (!helper.isSolid(newX, newY)) {
         //move to the next space
-        players[playerId].x = newX;
-        players[playerId].y = newY;
+        playerList[playerId].x = newX;
+        playerList[playerId].y = newY;
         if (xChange === 1) {
-            players[playerId].direction = "right";
+            playerList[playerId].direction = "right";
         }
         if (xChange === -1) {
-            players[playerId].direction = "left";
+            playerList[playerId].direction = "left";
         }
         await attemptGrabCoin(newX, newY);
-        await socket.emit("playerMove", players[playerId]);
+        await socket.emit("playerMove", playerList[playerId]);
     }
 }
 
@@ -96,45 +95,32 @@ function initGame() {
     });
 
     playerColorButton.addEventListener("click", () => {
-        const mySkinIndex = playerColors.indexOf(players[playerId].color);
+        const playerList = world.getAll();
+        const mySkinIndex = playerColors.indexOf(playerList[playerId].color);
         const nextColor = playerColors[mySkinIndex + 1] || playerColors[0];
+        playerList[playerId].color = nextColor;
         socket.emit("profileUpdate", { id: playerId, profile: "color", value: nextColor });
     });
     /* Player sockets */
-    socket.on("playerUpdate", function (data) {
-        players = data || {};
-        /* Look for stray bodies of disconnected users */
-        for (let key in playerElements) {
-            if (players[key] === undefined) {
-                gameContainer.removeChild(playerElements[key]);
-                delete playerElements[key];
-            }
-        }
-        for (let key in players) {
-            const characterState = data[key];
-            let el = playerElements[key];
-            //Update the DOM here
-            el.querySelector(".Character_name").innerText = characterState.name;
-            el.querySelector(".Character_coins").innerText = characterState.coins;
-            el.setAttribute("data-color", characterState.color);
-            el.setAttribute("data-direction", characterState.direction);
-            const left = 16 * characterState.x + "px";
-            const top = 16 * characterState.y - 4 + "px";
-            el.style.transform = `translate3d(${left}, ${top}, 0)`;
+    socket.on("playerUpdate", function (fromServer) {
+        for (let id in fromServer) {
+            let playerList = world.getAll();
+            playerList[id].playerUpdate(fromServer[id]);
         }
     });
     /* User spawn */
-    socket.on("playerInitial", function (data) {
-        Player.playerInitial(data);
+    socket.on("playerInitial", function (users) {
+        world.playerInitial(users);
     });
     /* When another user spawn */
-    socket.on("playerAdd", function (data) {
-        Player.playerAdd(data);
+    socket.on("playerSpawn", function (user) {
+        let newPlayer = new Player(user.id, user.name, user.direction, user.color, user.x, user.y, user.coins);
+        // newPlayer.playerSpawn();
+        world.addPlayer(newPlayer);
     });
     /* Remove player that disconnects from the DOM */
     socket.on("removePlayer", function (data) {
-        gameContainer.removeChild(playerElements[data]);
-        delete playerElements[data];
+        world.removePlayer();
     });
     /* End of player sockets */
     socket.on("coinsUpdate", function (data) {
@@ -174,11 +160,11 @@ function initGame() {
 }
 
 socket.on("playerWin", function (leaderboard) {
-    for (let key in players) {
-        players[key].coins = 0;
-        socket.emit("profileUpdate", { id: players[key].id, profile: "coins", value: 0 });
+    const playerList = world.getAll();
+    for (let key in playerList) {
+        playerList[key].coins = 0;
+        socket.emit("profileUpdate", { id: playerList[key].id, profile: "coins", value: 0 });
     }
-
     var audioCoin = new Audio("/sfx/win.mp3");
     audioCoin.play();
     /* Leaderboard */
@@ -188,25 +174,22 @@ socket.on("playerWin", function (leaderboard) {
         for (let leader in leaderboard) {
             sortList.push([leader, leaderboard[leader]]);
         }
-
         sortList.sort(function (a, b) {
             return b[1] - a[1];
         });
-
         for (let i = 0; i < sortList.length; i++) {
             $(".leaderboard-list").append(`<li>${sortList[i][0] + " : " + sortList[i][1]}</li>`);
         }
     }
 });
 
-socket.on("userConnect", function (data) {
-    playerId = data;
-
+socket.on("userConnect", function (id) {
+    playerId = id;
     const name = helper.createName();
     playerNameInput.value = name;
     const { x, y } = helper.getRandomSafeSpot();
-    let user = new Player(playerId, name, x, y);
+    let user = new Player(id, name, "", "", x, y, "");
+    world.addPlayer(user);
     socket.emit("userSpawn", user);
-
     initGame();
 });
