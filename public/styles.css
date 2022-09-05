@@ -168,6 +168,19 @@ button:active {
     text-transform: uppercase;
     white-space: nowrap;
 }
+.Character_chat-container {
+    position: absolute;
+    top: -20px;
+    left: -5px;
+    font-size: 5px;
+    padding: 1px 2px 1px;
+    border-radius: 3px;
+    background: #333;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
 .Character_coins {
     margin-left: 1px;
     color: gold;

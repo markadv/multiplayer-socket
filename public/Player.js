@@ -1,44 +1,18 @@
 class Player {
-    constructor(playerId, name, x, y) {
+    constructor(playerId, name, direction, color, x, y, coins) {
         this.id = playerId;
         this.name = name;
-        this.direction = "right";
-        this.color = helper.randomFromArray(playerColors);
+        this.direction = direction === "" ? "right" : direction;
+        this.color = color === "" ? helper.randomFromArray(playerColors) : color;
         this.x = x;
         this.y = y;
-        this.coins = 0;
+        this.coins = coins === "" ? 0 : coins;
+        this.el = this.playerSpawn();
     }
-    static playerInitial(data) {
-        for (let key in data) {
-            const characterEl = document.createElement("div");
-            characterEl.classList.add("Character", "grid-cell");
-            characterEl.innerHTML = `
-            <div class="Character_shadow grid-cell"></div>
-            <div class="Character_sprite grid-cell"></div>
-            <div class="Character_name-container">
-              <span class="Character_name"></span>
-              <span class="Character_coins">0</span>
-            </div>
-            <div class="Character_you-arrow"></div>
-          `;
-            playerElements[data[key].id] = characterEl;
-
-            //Fill in some initial state
-            characterEl.querySelector(".Character_name").innerText = data[key].name;
-            characterEl.querySelector(".Character_coins").innerText = data[key].coins;
-            characterEl.setAttribute("data-color", data[key].color);
-            characterEl.setAttribute("data-direction", data[key].direction);
-            const left = 16 * data[key].x + "px";
-            const top = 16 * data[key].y - 4 + "px";
-            characterEl.style.transform = `translate3d(${left}, ${top}, 0)`;
-            gameContainer.appendChild(characterEl);
-        }
-    }
-    static playerAdd(data) {
-        const addedPlayer = data;
+    playerSpawn() {
         const characterEl = document.createElement("div");
         characterEl.classList.add("Character", "grid-cell");
-        if (addedPlayer.id === playerId) {
+        if (this.id === playerId) {
             characterEl.classList.add("you");
         }
         characterEl.innerHTML = `
@@ -50,37 +24,27 @@ class Player {
             </div>
             <div class="Character_you-arrow"></div>
           `;
-        playerElements[addedPlayer.id] = characterEl;
 
         //Fill in some initial state
-        characterEl.querySelector(".Character_name").innerText = addedPlayer.name;
-        characterEl.querySelector(".Character_coins").innerText = addedPlayer.coins;
-        characterEl.setAttribute("data-color", addedPlayer.color);
-        characterEl.setAttribute("data-direction", addedPlayer.direction);
-        const left = 16 * addedPlayer.x + "px";
-        const top = 16 * addedPlayer.y - 4 + "px";
+        characterEl.querySelector(".Character_name").innerText = this.name;
+        characterEl.querySelector(".Character_coins").innerText = this.coins;
+        characterEl.setAttribute("data-color", this.color);
+        characterEl.setAttribute("data-direction", this.direction);
+        const left = 16 * this.x + "px";
+        const top = 16 * this.y - 4 + "px";
         characterEl.style.transform = `translate3d(${left}, ${top}, 0)`;
         gameContainer.appendChild(characterEl);
+        return characterEl;
     }
-    playerUpdate(data) {
-        players = data || {};
-        for (let key in playerElements) {
-            if (players[key] === undefined) {
-                gameContainer.removeChild(playerElements[key]);
-                delete playerElements[key];
-            }
-        }
-        for (let key in players) {
-            const characterState = players[key];
-            let el = playerElements[key];
-            //Update the DOM here
-            el.querySelector(".Character_name").innerText = characterState.name;
-            el.querySelector(".Character_coins").innerText = characterState.coins;
-            el.setAttribute("data-color", characterState.color);
-            el.setAttribute("data-direction", characterState.direction);
-            const left = 16 * characterState.x + "px";
-            const top = 16 * characterState.y - 4 + "px";
-            el.style.transform = `translate3d(${left}, ${top}, 0)`;
-        }
+    playerUpdate(fromServer) {
+        //Update the DOM here
+        this.el.querySelector(".Character_name").innerText = fromServer.name;
+        this.el.querySelector(".Character_coins").innerText = fromServer.coins;
+        this.el.setAttribute("data-color", fromServer.color);
+        this.el.setAttribute("data-direction", fromServer.direction);
+        const left = 16 * fromServer.x + "px";
+        const top = 16 * fromServer.y - 4 + "px";
+        this.el.style.transform = `translate3d(${left}, ${top}, 0)`;
+        // }
     }
 }
