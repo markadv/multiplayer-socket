@@ -65,4 +65,3 @@ function coinSpawner() {
     }
 }
 coinSpawner();
-function playerCoinsToZero() {}
