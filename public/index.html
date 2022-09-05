@@ -1,0 +1,36 @@
+<html>
+    <head>
+        <title>Multiplayer Demo</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="styles.css" type="text/css" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+        <script type="text/javascript" src="socket.io/socket.io.js"></script>
+        <script src="helper.js" defer></script>
+        <script src="Player.js" defer></script>
+        <script src="Controller.js" defer></script>
+        <script src="app.js" defer></script>
+    </head>
+    <body>
+        <audio src="bgm/Run-Amok.mp3" loop></audio>
+        <div class="game-container"></div>
+        <div class="player-info">
+            <div>
+                <label for="player-name">Your Name</label>
+                <input id="player-name" maxlength="10" type="text" />
+            </div>
+            <div>
+                <button id="player-color">Change Color</button>
+            </div>
+            <p>Race to 15 coins. Good luck!</p>
+            <div class="leaderboard">
+                <p>LEADERBOARD</p>
+                <ol class="leaderboard-list"></ol>
+            </div>
+        </div>
+    </body>
+</html>
