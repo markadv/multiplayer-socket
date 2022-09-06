@@ -1,3 +1,4 @@
+// var socket = io({ upgrade: false, transports: ["websocket", "polling"] });
 var socket = io();
 socket.emit("initServer");
 let world = new World();
@@ -5,15 +6,18 @@ let world = new World();
 // Options for Player Colors... these are in the same order as our sprite sheet
 const playerColors = ["blue", "red", "orange", "yellow", "green", "purple"];
 let playerId;
-// let players = {};
-// let playerElements = {};
 let coins = {};
 let coinElements = {};
 let audioBgm;
 let moveAllowed = true;
+let changeNameAllowed = true;
+let changeColorAllowed = true;
+let changeChatAllowed = true;
+let initialDom = false;
 
 const gameContainer = document.querySelector(".game-container");
 const playerNameInput = document.querySelector("#player-name");
+const playerChatInput = document.querySelector("#player-chat");
 const playerColorButton = document.querySelector("#player-color");
 const audio = document.querySelector("audio");
 
@@ -25,7 +29,7 @@ async function attemptGrabCoin(x, y) {
         playerList[playerId].coins++;
         var audioCoin = new Audio("/sfx/collect-coin.mp3");
         audioCoin.play();
-        socket.emit("coinsAdd", { key: key, id: playerId });
+        socket.emit("coinsAdd", { key: key });
     }
 }
 
@@ -34,7 +38,8 @@ async function handleControls(xChange = 0, yChange = 0) {
         return;
     }
     moveAllowed = false;
-    setTimeout(() => (moveAllowed = true), 100);
+    //Testing server based timer
+    // setTimeout(() => (moveAllowed = true), 100);
     playMusic();
     /* Controls */
     const playerList = world.getAll();
@@ -89,38 +94,68 @@ function initGame() {
     new Controller("KeyD", () => handleControls(1, 0));
 
     playerNameInput.addEventListener("change", (e) => {
-        const newName = e.target.value || helper.createName();
-        playerNameInput.value = newName.toUpperCase();
-        socket.emit("profileUpdate", { id: playerId, profile: "name", value: newName });
+        if (changeNameAllowed) {
+            changeNameAllowed = false;
+            const playerList = world.getAll();
+            let newName = e.target.value || helper.createName();
+            newName = newName.toUpperCase();
+            console.log(newName);
+            playerNameInput.value = newName;
+            playerList[playerId].name = newName;
+            socket.emit("profileUpdate", { profile: "name", value: newName });
+        }
     });
 
     playerColorButton.addEventListener("click", () => {
-        const playerList = world.getAll();
-        const mySkinIndex = playerColors.indexOf(playerList[playerId].color);
-        const nextColor = playerColors[mySkinIndex + 1] || playerColors[0];
-        playerList[playerId].color = nextColor;
-        socket.emit("profileUpdate", { id: playerId, profile: "color", value: nextColor });
+        if (changeColorAllowed) {
+            changeColorAllowed = false;
+            const playerList = world.getAll();
+            const mySkinIndex = playerColors.indexOf(playerList[playerId].color);
+            const nextColor = playerColors[mySkinIndex + 1] || playerColors[0];
+            playerList[playerId].color = nextColor;
+            socket.emit("profileUpdate", { profile: "color", value: nextColor });
+        }
     });
-    /* Player sockets */
-    socket.on("playerUpdate", function (fromServer) {
-        for (let id in fromServer) {
-            let playerList = world.getAll();
-            playerList[id].playerUpdate(fromServer[id]);
+
+    playerChatInput.addEventListener("change", (e) => {
+        if (changeChatAllowed) {
+            moveAllowed = false;
+            console.log(moveAllowed);
+            changeChatAllowed = false;
+            const playerList = world.getAll();
+            let newChat = e.target.value;
+            newChat = newChat.toUpperCase();
+            // playerChatInput.value = newChat;
+            playerList[playerId].chat = newChat;
+            socket.emit("profileUpdate", { profile: "chat", value: newChat });
         }
     });
     /* User spawn */
     socket.on("playerInitial", function (users) {
         world.playerInitial(users);
+        initialDom = true;
+        console.log(world);
+    });
+    /* Player sockets */
+    socket.on("playerUpdate", function (fromServer) {
+        if (!initialDom) return;
+        changeNameAllowed = true;
+        changeChatAllowed = true;
+        changeColorAllowed = true;
+        moveAllowed = true;
+        for (let id in fromServer) {
+            let playerList = world.getAll();
+            playerList[id].playerUpdate(fromServer[id]);
+        }
     });
     /* When another user spawn */
     socket.on("playerSpawn", function (user) {
         let newPlayer = new Player(user.id, user.name, user.direction, user.color, user.x, user.y, user.coins);
-        // newPlayer.playerSpawn();
         world.addPlayer(newPlayer);
     });
     /* Remove player that disconnects from the DOM */
-    socket.on("removePlayer", function (data) {
-        world.removePlayer();
+    socket.on("removePlayer", function (id) {
+        world.removePlayer(id);
     });
     /* End of player sockets */
     socket.on("coinsUpdate", function (data) {
@@ -159,14 +194,15 @@ function initGame() {
     });
 }
 
-socket.on("playerWin", function (leaderboard) {
+socket.on("playerWin", function () {
     const playerList = world.getAll();
     for (let key in playerList) {
         playerList[key].coins = 0;
-        socket.emit("profileUpdate", { id: playerList[key].id, profile: "coins", value: 0 });
     }
     var audioCoin = new Audio("/sfx/win.mp3");
     audioCoin.play();
+});
+socket.on("leaderboardUpdate", function (leaderboard) {
     /* Leaderboard */
     if (Object.keys(leaderboard).length > 0) {
         $(".leaderboard-list").html("");
