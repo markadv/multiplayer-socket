@@ -8,6 +8,7 @@ class Player {
         this.y = y;
         this.coins = coins === "" ? 0 : coins;
         this.el = this.playerSpawn();
+        this.chat = "";
     }
     playerSpawn() {
         const characterEl = document.createElement("div");
@@ -18,6 +19,9 @@ class Player {
         characterEl.innerHTML = `
             <div class="Character_shadow grid-cell"></div>
             <div class="Character_sprite grid-cell"></div>
+            <div class="Character_chat-container">
+                <span class="Character_chat"></span>
+            </div>
             <div class="Character_name-container">
               <span class="Character_name"></span>
               <span class="Character_coins">0</span>
@@ -28,6 +32,7 @@ class Player {
         //Fill in some initial state
         characterEl.querySelector(".Character_name").innerText = this.name;
         characterEl.querySelector(".Character_coins").innerText = this.coins;
+        characterEl.querySelector(".Character_chat").innerText = "";
         characterEl.setAttribute("data-color", this.color);
         characterEl.setAttribute("data-direction", this.direction);
         const left = 16 * this.x + "px";
@@ -40,6 +45,7 @@ class Player {
         //Update the DOM here
         this.el.querySelector(".Character_name").innerText = fromServer.name;
         this.el.querySelector(".Character_coins").innerText = fromServer.coins;
+        this.el.querySelector(".Character_chat").innerText = fromServer.chat;
         this.el.setAttribute("data-color", fromServer.color);
         this.el.setAttribute("data-direction", fromServer.direction);
         const left = 16 * fromServer.x + "px";
