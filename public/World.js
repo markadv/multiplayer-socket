@@ -24,9 +24,9 @@ class World {
     addPlayer(player) {
         this.players[player.id] = player;
     }
-    removePlayer(player) {
-        gameContainer.removeChild(playerElements[data]);
-        delete this.players[player.id];
+    removePlayer(id) {
+        gameContainer.removeChild(this.players[id].el);
+        delete this.players[id];
     }
     getAll() {
         return this.players;
