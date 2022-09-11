@@ -44,7 +44,6 @@ class helper {
             "ADIK NA",
             "MATALINONG",
             "PANGIT NA",
-            "SANTONG",
         ]);
         const hayop = helper.randomFromArray([
             "OSO",

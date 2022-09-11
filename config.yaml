@@ -1,0 +1,31 @@
+enableProfiler: false
+localPort: 1337
+routes:
+    "/Games/index": "/"
+dbdriver: "database1"
+database1:
+    host: "localhost"
+    port: 5432
+    user: "postgres"
+    password: "123456"
+    database: "postgres"
+    max: 30
+database2:
+    host: "localhost"
+    port: 3308
+    user: "root"
+    password: ""
+    database: "gemu_mvc"
+    waitForConnections: true
+    connectionLimit: 10
+    queueLimit: 0
+database3:
+    uri: "mongodb+srv://markad:rL64xwvroAYU25fV@gemu-mvc.0rdsfx8.mongodb.net/?retryWrites=true&w=majority"
+    database: "gemu-mvc"
+enableRedis: true
+sessionConfig:
+    secret: "gemu_mvc"
+    resave: false
+    saveUninitialized: true
+    cookie:
+        secure: false
