@@ -1,14 +1,14 @@
 class Player {
-    constructor(playerId, name, direction, color, x, y, coins) {
+    constructor(playerId, name, direction, sprite, x, y, coins) {
         this.id = playerId;
         this.name = name;
         this.direction = direction === "" ? "right" : direction;
-        this.color = color === "" ? helper.randomFromArray(playerColors) : color;
+        this.sprite = sprite === "" ? Math.floor(Math.random() * 40) : sprite;
         this.x = x;
         this.y = y;
         this.coins = coins === "" ? 0 : coins;
         this.el = this.playerSpawn();
-        this.chat = "";
+        this.status = "";
     }
     playerSpawn() {
         const characterEl = document.createElement("div");
@@ -33,7 +33,7 @@ class Player {
         characterEl.querySelector(".Character_name").innerText = this.name;
         characterEl.querySelector(".Character_coins").innerText = this.coins;
         characterEl.querySelector(".Character_chat").innerText = "";
-        characterEl.setAttribute("data-color", this.color);
+        characterEl.setAttribute("data-color", this.sprite);
         characterEl.setAttribute("data-direction", this.direction);
         const left = 16 * this.x + "px";
         const top = 16 * this.y - 4 + "px";
@@ -43,10 +43,11 @@ class Player {
     }
     playerUpdate(fromServer) {
         //Update the DOM here
+        console.log("dom", fromServer.name);
         this.el.querySelector(".Character_name").innerText = fromServer.name;
         this.el.querySelector(".Character_coins").innerText = fromServer.coins;
-        this.el.querySelector(".Character_chat").innerText = fromServer.chat;
-        this.el.setAttribute("data-color", fromServer.color);
+        this.el.querySelector(".Character_chat").innerText = fromServer.status;
+        this.el.setAttribute("data-color", fromServer.sprite);
         this.el.setAttribute("data-direction", fromServer.direction);
         const left = 16 * fromServer.x + "px";
         const top = 16 * fromServer.y - 4 + "px";

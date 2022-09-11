@@ -1,0 +1,66 @@
+<% let style = "width: 90%; margin: 20px auto; text-align: left; padding: 0px 10px; background-color:lightgray;font-size:18px"%>
+<div style="border: 1px solid red; color: red;<%= style %>">
+    <h2>Benchmark</h2>
+    <h4><%= locals.profiler.performance %> ms</h4>
+</div>
+<div style="border: 1px solid orange; color: orange;<%= style %>">
+    <h4>Get Params:</h4>
+    <ul>
+        <% if(Object.keys(locals.profiler.getparams)!==0) { %> <%for(let name in locals.profiler.getparams){%>
+        <li><%= name %>:<%= locals.profiler.getparams[name] %></li>
+        <%} }%>
+    </ul>
+</div>
+<div style="border: 1px solid purple; color: purple;<%= style %>">
+    <h2>Memory Usage</h2>
+    <h4><%= locals.profiler.memoryUsage %> MB</h4>
+</div>
+<div style="border: 1px solid green; color: green;<%= style %>">
+    <h2>Post Data</h2>
+    <h4>Get Post:</h4>
+    <ul>
+        <% if(Object.keys(locals.profiler.post)!==0) { %> <%for(let name in locals.profiler.post){%>
+        <li><%= name %>:<%= locals.profiler.post[name] %></li>
+        <%} }%>
+    </ul>
+</div>
+<div style="border: 1px solid black; color: black;<%= style %>">
+    <h2>URI string</h2>
+    <ul>
+        <% if(Object.keys(locals.profiler.getquery)!==0) { %> <%for(let name in locals.profiler.getquery){%>
+        <li><%= name %>:<%= locals.profiler.getquery[name] %></li>
+        <%} }%>
+    </ul>
+</div>
+<div style="border: 1px solid brown; color: brown;<%= style %>">
+    <h2>Class/Method</h2>
+    <h4>Class/Method: <%= locals.profiler.route.classMethod %></h4>
+    <h4>New Url: <%= locals.profiler.route.url %></h4>
+</div>
+<div style="border: 1px solid blue; color: blue;<%= style %>">
+    <h2>Database</h2>
+    <ul>
+        <% if(locals.profiler.query!==undefined) { %> <%for(let i; i<locals.profiler.query.length;i++){%>
+        <li><%= locals.profiler.query[i] %></li>
+        <%} }%>
+    </ul>
+    <h4><%= locals.profiler.query %></h4>
+</div>
+<div style="border: 1px solid black; color: black;<%= style %>">
+    <h2>HTTP Headers</h2>
+    <pre style="font-size: medium; white-space: pre-line">
+        <%= JSON.stringify(locals.profiler.httpHeader, undefined, 2) %>
+    </pre>
+</div>
+<div style="border: 1px solid black; color: black;<%= style %>">
+    <h2>Session Data</h2>
+    <pre style="font-size: medium; white-space: pre-line">
+        <%= JSON.stringify(locals.profiler.session, undefined, 2) %>
+    </pre>
+</div>
+<div style="border: 1px solid black; color: black;<%= style %>">
+    <h2>Config Variables</h2>
+    <pre style="font-size: medium; white-space: pre-line">
+        <%= JSON.stringify(locals.profiler.config, undefined, 2) %>
+    </pre>
+</div>
