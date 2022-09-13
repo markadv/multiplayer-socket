@@ -11,6 +11,6 @@ module.exports = class Games extends Controller {
         this.#Game = new Game();
     }
     index = async (req, res) => {
-        await this._view(req, res, { title: "Games", content: "Games/index", data: {} });
+        await this._view(req, res, { title: "Gemu Brawl", content: "Games/index", data: {} });
     };
 };

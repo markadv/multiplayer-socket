@@ -19,6 +19,21 @@ module.exports = class Player {
     changeSprite = () => {
         this.sprite = Math.floor(Math.random() * 40);
     };
+    move = (xMove, yMove, coins) => {
+        const newX = this.x - xMove;
+        const newY = this.y - yMove;
+        let gotCoin = false;
+        if (!helper.isSolid(newX, newY)) {
+            this.x = this.x - xMove;
+            this.y = this.y - yMove;
+            this.changeDirection(xMove);
+            if (helper.attemptGrabCoin(this.x, this.y, coins) === true) {
+                this.coins++;
+                gotCoin = true;
+            }
+        }
+        return gotCoin;
+    };
     moveLeft = (coins) => {
         const newX = this.x - 1;
         let gotCoin = false;

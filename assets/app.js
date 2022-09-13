@@ -76,9 +76,31 @@ function initGame() {
     new Controller("ArrowRight", () => handleControls("moveRight"));
     new Controller("KeyD", () => handleControls("moveRight"));
 
+    playerNameInput.addEventListener("focus", (e) => {
+        playerNameInput.select();
+        inName = true;
+        moveAllowed = false;
+    });
+    playerNameInput.addEventListener("focusout", (e) => {
+        inName = false;
+        moveAllowed = true;
+    });
+    $("form").submit((e) => {
+        $("input").blur();
+        e.preventDefault();
+        console.log("submitted");
+    });
+    playerChatInput.addEventListener("focus", (e) => {
+        playerChatInput.select();
+        inChat = true;
+        moveAllowed = false;
+    });
+    playerChatInput.addEventListener("focusout", (e) => {
+        inChat = false;
+        moveAllowed = true;
+    });
     playerNameInput.addEventListener("change", (e) => {
         if (changeNameAllowed) {
-            inName = true;
             changeNameAllowed = false;
             moveAllowed = false;
             const playerList = world.getAll();
@@ -116,6 +138,7 @@ function initGame() {
             socket.emit("profileUpdate", { profile: "status", value: newChat });
         }
     });
+
     /* User spawn */
     socket.on("playerInitial", function (users) {
         world.playerInitial(users);
@@ -127,7 +150,9 @@ function initGame() {
         changeNameAllowed = true;
         changeChatAllowed = true;
         changeSpriteAllowed = true;
-        moveAllowed = true;
+        if (!inName && !inChat) {
+            moveAllowed = true;
+        }
         for (let id in fromServer) {
             let playerList = world.getAll();
             playerList[id].playerUpdate(fromServer[id]);
@@ -147,9 +172,7 @@ function initGame() {
     socket.on("gotCoin", function () {
         const playerList = world.getAll();
         playerList[playerId].coins++;
-        console.log("coins");
         var audioCoin = new Audio("/sfx/collect-coin.mp3");
-        console.log("sounds");
         audioCoin.play();
     });
     socket.on("coinsUpdate", function (data) {
@@ -188,7 +211,7 @@ function initGame() {
     });
 }
 
-socket.on("playerWin", function () {
+socket.on("playerWin", function (data) {
     const playerList = world.getAll();
     for (let key in playerList) {
         playerList[key].coins = 0;

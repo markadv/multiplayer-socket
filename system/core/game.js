@@ -1,7 +1,11 @@
 const Player = require("./classes/Player");
 const World = require("./classes/World");
 const helper = require("./classes/helper");
-const { SocketClosedUnexpectedlyError } = require("redis");
+const { RateLimiterMemory } = require("rate-limiter-flexible");
+const rateLimiter = new RateLimiterMemory({
+    points: 15, // 15 points
+    duration: 1, // per second
+});
 let world = new World();
 /* Start of sockets.io */
 module.exports = async (server, sessionMiddleware) => {
@@ -13,7 +17,7 @@ module.exports = async (server, sessionMiddleware) => {
     io.use(wrap(sessionMiddleware));
     let leaderboard = {},
         coins = { "7x7": { x: 7, y: 7 } },
-        connectionsLimit = 30;
+        connectionsLimit = 60;
 
     io.use((socket, next) => {
         if (socket.request.session.leaderboard !== undefined) {
@@ -27,15 +31,14 @@ module.exports = async (server, sessionMiddleware) => {
     io.on("connection", function (socket) {
         let allowMove = true;
         /* Initialize connection */
-        socket.once("initServer", function () {
+        socket.once("initServer", async function () {
             // const session = socket.request.session;
             if (Object.keys(world.players).length > connectionsLimit) {
                 socket.emit("disconnected", { message: "Reach the limit of connections" });
-                socket.disconnect();
-                console.log("Disconnected...");
+                // socket.disconnect();
+                // console.log("Disconnected...");
                 return;
-            } else if (world.players["socket.id"]) {
-            } else {
+            } else if (!world.players[socket.id]) {
                 let newPlayer = new Player(socket.id);
                 world.addPlayer(newPlayer);
                 socket.emit("leaderboardUpdate", leaderboard);
@@ -43,7 +46,7 @@ module.exports = async (server, sessionMiddleware) => {
                 socket.emit("userConnect", newPlayer, world.players);
             }
         });
-        socket.on("disconnect", function () {
+        socket.on("disconnect", async function () {
             //remove player from client and database
             delete world.removePlayer(socket.id);
             socket.broadcast.emit("removePlayer", socket.id);
@@ -51,8 +54,14 @@ module.exports = async (server, sessionMiddleware) => {
         });
         /* Player actions (Must be fully optimized)
     Update dependent. */
-        socket.on("playerMove", function (movement) {
+        socket.on("playerMove", async function (movement) {
             try {
+                await rateLimiter.consume(socket.handshake.address);
+                if (!world.players[socket.id]) {
+                    socket.emit("disconnected", { message: "Server restarted. Please refresh your browser." });
+                    socket.disconnect();
+                    return;
+                }
                 if (allowMove === false) {
                     return;
                 }
@@ -67,6 +76,8 @@ module.exports = async (server, sessionMiddleware) => {
                     gotCoin = world.players[socket.id].moveLeft(coins);
                 } else if (movement === "moveRight") {
                     gotCoin = world.players[socket.id].moveRight(coins);
+                } else {
+                    return;
                 }
                 if (gotCoin === true) {
                     socket.emit("gotCoin");
@@ -79,10 +90,9 @@ module.exports = async (server, sessionMiddleware) => {
         /* Change Name/Color Update dependent. */
         socket.on("profileUpdate", function (data) {
             try {
-                if (data.profile !== "name" || data.profile !== "sprite" || data.profile !== "status") {
-                    return;
+                if (data.profile === "name" || data.profile === "sprite" || data.profile === "status") {
+                    world.players[socket.id][data.profile] = data.value;
                 }
-                world.players[socket.id][data.profile] = data.value;
             } catch (e) {
                 console.log(e);
             }
@@ -91,7 +101,7 @@ module.exports = async (server, sessionMiddleware) => {
             if (typeof world.players[id]["coins"] === undefined) {
                 return;
             }
-            if (world.players[id]["coins"] >= 15) {
+            if (world.players[id]["coins"] >= 10) {
                 world.players[id]["coins"] = 0;
                 for (let key in world.players) {
                     world.players[key].coins = 0;
@@ -100,8 +110,7 @@ module.exports = async (server, sessionMiddleware) => {
                     ? leaderboard[world.players[id].name]++
                     : (leaderboard[world.players[id].name] = 1);
                 socket.request.session.leaderboard = leaderboard;
-                console.log(leaderboard, socket.request.session.leaderboard);
-                io.emit("playerWin");
+                io.emit("playerWin", { id: socket.id });
                 io.emit("leaderboardUpdate", leaderboard);
             }
             let key = helper.getKeyString(world.players[id].x, world.players[id].y);

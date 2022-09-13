@@ -43,7 +43,6 @@ class Player {
     }
     playerUpdate(fromServer) {
         //Update the DOM here
-        console.log("dom", fromServer.name);
         this.el.querySelector(".Character_name").innerText = fromServer.name;
         this.el.querySelector(".Character_coins").innerText = fromServer.coins;
         this.el.querySelector(".Character_chat").innerText = fromServer.status;

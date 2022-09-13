@@ -339,3 +339,6 @@ button:active {
 .Coin_shadow {
     background: url(/images/coin-shadow.png) no-repeat no-repeat;
 }
+[type="submit"] {
+    display: none;
+}
