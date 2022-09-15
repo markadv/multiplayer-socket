@@ -7,6 +7,7 @@ const rateLimiter = new RateLimiterMemory({
     duration: 1, // per second
 });
 let world = new World();
+let movementMatrix = { moveUp: [0, -1], moveDown: [0, 1], moveRight: [1, 0], moveLeft: [-1, 0] };
 /* Start of sockets.io */
 module.exports = async (server, sessionMiddleware) => {
     const connectionOptions = {
@@ -68,17 +69,11 @@ module.exports = async (server, sessionMiddleware) => {
                 allowMove = false;
                 setTimeout(() => (allowMove = true), 100);
                 let gotCoin = false;
-                if (movement === "moveUp") {
-                    gotCoin = world.players[socket.id].moveUp(coins);
-                } else if (movement === "moveDown") {
-                    gotCoin = world.players[socket.id].moveDown(coins);
-                } else if (movement === "moveLeft") {
-                    gotCoin = world.players[socket.id].moveLeft(coins);
-                } else if (movement === "moveRight") {
-                    gotCoin = world.players[socket.id].moveRight(coins);
-                } else {
+                //Guard clause to check if input is allowed
+                if (typeof movementMatrix[movement] === undefined) {
                     return;
                 }
+                gotCoin = world.players[socket.id].move(...movementMatrix[movement], coins);
                 if (gotCoin === true) {
                     socket.emit("gotCoin");
                     checkWin(socket.id);

@@ -20,63 +20,13 @@ module.exports = class Player {
         this.sprite = Math.floor(Math.random() * 40);
     };
     move = (xMove, yMove, coins) => {
-        const newX = this.x - xMove;
-        const newY = this.y - yMove;
+        const newX = this.x + xMove;
+        const newY = this.y + yMove;
         let gotCoin = false;
         if (!helper.isSolid(newX, newY)) {
-            this.x = this.x - xMove;
-            this.y = this.y - yMove;
+            this.x = this.x + xMove;
+            this.y = this.y + yMove;
             this.changeDirection(xMove);
-            if (helper.attemptGrabCoin(this.x, this.y, coins) === true) {
-                this.coins++;
-                gotCoin = true;
-            }
-        }
-        return gotCoin;
-    };
-    moveLeft = (coins) => {
-        const newX = this.x - 1;
-        let gotCoin = false;
-        if (!helper.isSolid(newX, this.y)) {
-            this.x--;
-            this.changeDirection(-1);
-            if (helper.attemptGrabCoin(this.x, this.y, coins) === true) {
-                this.coins++;
-                gotCoin = true;
-            }
-        }
-        return gotCoin;
-    };
-    moveRight = (coins) => {
-        const newX = this.x + 1;
-        let gotCoin = false;
-        if (!helper.isSolid(newX, this.y)) {
-            this.x++;
-            this.changeDirection(1);
-            if (helper.attemptGrabCoin(this.x, this.y, coins) === true) {
-                this.coins++;
-                gotCoin = true;
-            }
-        }
-        return gotCoin;
-    };
-    moveUp = (coins) => {
-        const newY = this.y - 1;
-        let gotCoin = false;
-        if (!helper.isSolid(this.x, newY)) {
-            this.y--;
-            if (helper.attemptGrabCoin(this.x, this.y, coins) === true) {
-                this.coins++;
-                gotCoin = true;
-            }
-        }
-        return gotCoin;
-    };
-    moveDown = (coins) => {
-        const newY = this.y + 1;
-        let gotCoin = false;
-        if (!helper.isSolid(this.x, newY)) {
-            this.y++;
             if (helper.attemptGrabCoin(this.x, this.y, coins) === true) {
                 this.coins++;
                 gotCoin = true;
@@ -93,8 +43,7 @@ module.exports = class Player {
     changeDirection = async (xChange) => {
         if (xChange === 1) {
             this.direction = "right";
-        }
-        if (xChange === -1) {
+        } else if (xChange === -1) {
             this.direction = "left";
         }
     };

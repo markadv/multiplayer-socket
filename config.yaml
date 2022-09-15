@@ -22,7 +22,7 @@ database2:
 database3:
     uri: "mongodb+srv://markad:rL64xwvroAYU25fV@gemu-mvc.0rdsfx8.mongodb.net/?retryWrites=true&w=majority"
     database: "gemu-mvc"
-enableRedis: true
+enableRedis: false
 sessionConfig:
     secret: "gemu_mvc"
     resave: false
